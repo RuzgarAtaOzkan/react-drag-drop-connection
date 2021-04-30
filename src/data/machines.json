@@ -1,0 +1,24 @@
+[
+    {
+        "id": 1,
+        "name": "MacOS-2A",
+        "ip": "128.255.255.46",
+        "port": 8006,
+        "pos": {
+            "x": 0,
+            "y": 0
+        },
+        "connections": [
+            {
+                "target": "ubuntu-TA2DB",
+                "type": "http"
+            },
+            {
+                "target": "windows",
+                "type": "http"
+            }
+        ],
+        "createdAt": null
+    }
+]
+
