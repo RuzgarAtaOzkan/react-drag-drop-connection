@@ -1,6 +1,6 @@
 
+// MODULES
 import React from 'react';
-import LineTo from 'react-lineto';
 
 // STYLES
 import './GridArea.scss';
@@ -9,14 +9,21 @@ class GridArea extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            isDraggable: false,
-            machines: [],
-            choosenMachine: 0,
-            updating: false
+            isDraggable: false, // determine wether a machine should follow the cursor pos, trigger on onMouseDown
+            machines: [], // include the infos about the machine
+            choosenMachine: 0, // choosen machine id
+            updating: false, // just a dummy bool when I want to update the doms
         }
 
-        this.choosenMachine = null;
+        this.machineElements = []; // acutal DOM Elements referring to machines div
 
+        this.choosenMachine = null; // chosen machine DOM
+
+        // binded functions
+        this.onMachineDrag = this.onMachineDrag.bind(this);
+        this.onMachineRelease = this.onMachineRelease.bind(this);
+        this.onMachineDelete = this.onMachineDelete.bind(this);
+        this.onSave = this.onSave.bind(this);
         this.createMachine = this.createMachine.bind(this);
         this.onCursorMove = this.onCursorMove.bind(this);
     }
@@ -30,18 +37,55 @@ class GridArea extends React.Component {
             }
         });
 
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        const randomX = Math.floor(Math.random() * (width - width / 3) + 100) + 'px';
+        const randomY = Math.floor(Math.random() * (height - height / 3) + 100) + 'px';
+
+        console.log(randomX, randomY);
+
         const newMachine = {
             id: (maxValue + 1),
             name,
             connections: [],
             pos: {
-                x: 0,
-                y: 0
+                x: randomX,
+                y: randomY
             },
             ref: React.createRef()
         };
 
+        this.machineElements = [...this.machineElements, newMachine.ref];
         this.setState({ machines: [...this.state.machines, newMachine] });
+    }
+
+    onMachineDrag(e, machine) {
+        this.setState({ isDraggable: true, choosenMachine: machine.id });
+        this.choosenMachine = machine.ref;
+    }
+
+    onMachineRelease(e, machine) {
+        this.setState({ isDraggable: false });
+        // Update the choosen machine positions on mouse up
+        const updatedMachines = this.state.machines.map((thisMachine) => {
+            if (thisMachine.id === machine.id) {
+                const { left, top } = this.choosenMachine.current.style;
+                thisMachine.pos.x = left;
+                thisMachine.pos.y = top;
+            } 
+
+            return thisMachine;
+        });
+        this.setState({ machines: updatedMachines });
+    }
+
+    onMachineDelete(e, machine) {
+
+        this.setState({ 
+            machines: this.state.machines.filter((thisMachine) => thisMachine.id !== machine.id) 
+        });
+        
     }
 
     renderMachines(machines) {
@@ -50,42 +94,15 @@ class GridArea extends React.Component {
                 <div
                     key={index}
                     ref={machine.ref}
-                    onMouseDown={(e) => {
-                        this.setState({ isDraggable: true, choosenMachine: machine.id });
-                        this.choosenMachine = machine.ref;
-                    }}
-                    onMouseUp={(e) => {
-                        this.setState({ isDraggable: false });
-                        // Update the choosen machine positions on mouse up
-                        const updatedMachines = this.state.machines.map((thisMachine) => {
-                            if (thisMachine.id === machine.id) {
-                                const { left, top } = this.choosenMachine.current.style;
-                                thisMachine.pos.x = left;
-                                thisMachine.pos.y = top;
-                            } 
-
-                            return thisMachine;
-                        });
-                        this.setState({ machines: updatedMachines });
-                        console.log(updatedMachines);
-                    }}
-                    className={`machine id${machine.id}`}
+                    onMouseDown={(e) => this.onMachineDrag(e, machine)}
+                    onMouseUp={(e) => this.onMachineRelease(e, machine)}
+                    className="machine"
+                    id={machine.id.toString()}
+                    style={{ left: machine.pos.x, top: machine.pos.y }}
                 >
                     {machine.name}
-
                     <button
-                        onClick={() => {
-
-                            const machineInfos = this.state.machines;
-                            console.log(machineInfos);
-
-                            this.setState({ updating: true });
-
-                            //this.setState({ 
-                            //    machines: this.state.machines.filter((thisMachine) => thisMachine.id !== machine.id) 
-                            //});
-                            
-                        }}
+                        onClick={(e) => this.onMachineDelete(e, machine)}
                     >
                         Delete
                     </button>
@@ -97,10 +114,35 @@ class GridArea extends React.Component {
 
     onCursorMove(e) {
         if (this.choosenMachine && this.state.isDraggable) {
-            this.setState({ updating: true });
-            this.choosenMachine.current.style.left = e.screenX - 50 + 'px'; // TODO Automize the decrease value by getting the width of the machine
-            this.choosenMachine.current.style.top = e.screenY - 150 + 'px';
+            
+            const choosenMachine = this.choosenMachine.current;
+
+            choosenMachine.style.left = e.screenX - 50 + 'px'; // TODO Automize the decrease value by getting the width of the machine
+            choosenMachine.style.top = e.screenY - 150 + 'px';
         }
+    }
+
+    onSave() {
+        const machinesInfo = this.state.machines.map((machine, index) => {
+
+            if (!machine || !machine.ref || !machine.ref.current) {
+                throw new Error('Machine is null');
+            }
+
+            const info = {
+                id: machine.id,
+                name: machine.name,
+                pos: {
+                    x: machine.ref.current.style.left,
+                    y: machine.ref.current.style.top
+                },
+                createdAt: Date.now()
+            }
+
+            return info;
+        });
+
+        console.log(machinesInfo);
     }
 
     render() {
@@ -139,35 +181,9 @@ class GridArea extends React.Component {
 
                     {this.renderMachines(this.state.machines)}
 
-                    <button
-                        onClick={() => {
-                            const machinesInfo = this.state.machines.map((machine, index) => {
-
-                                if (!machine || !machine.ref || !machine.ref.current) {
-                                    throw new Error('Machine is null');
-                                }
-
-                                const info = {
-                                    id: machine.id,
-                                    name: machine.name,
-                                    pos: {
-                                        x: machine.ref.current.style.left,
-                                        y: machine.ref.current.style.top
-                                    },
-                                    createdAt: Date.now()
-                                }
-
-                                return info;
-                            });
-
-                            // TODO Write all the infos to the machines.json
-                            console.log(machinesInfo);
-                        }}
-                    >
+                    <button onClick={this.onSave}>
                         Save
                     </button>
-
-                    <LineTo from="id1" to="id2" toAnchor="top left" />
                 </div>
             </>
         );
