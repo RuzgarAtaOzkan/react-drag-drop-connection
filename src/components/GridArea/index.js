@@ -1,5 +1,6 @@
 
 import React from 'react';
+import LineTo from 'react-lineto';
 
 // STYLES
 import './GridArea.scss';
@@ -10,8 +11,11 @@ class GridArea extends React.Component {
         this.state = {
             isDraggable: false,
             machines: [],
-            choosenMachine: 0
+            choosenMachine: 0,
+            updating: false
         }
+
+        this.choosenMachine = null;
 
         this.createMachine = this.createMachine.bind(this);
         this.onCursorMove = this.onCursorMove.bind(this);
@@ -29,6 +33,11 @@ class GridArea extends React.Component {
         const newMachine = {
             id: (maxValue + 1),
             name,
+            connections: [],
+            pos: {
+                x: 0,
+                y: 0
+            },
             ref: React.createRef()
         };
 
@@ -43,18 +52,43 @@ class GridArea extends React.Component {
                     ref={machine.ref}
                     onMouseDown={(e) => {
                         this.setState({ isDraggable: true, choosenMachine: machine.id });
+                        this.choosenMachine = machine.ref;
                     }}
                     onMouseUp={(e) => {
-                        const choosenMachine = this.state.machines.find((machine) => machine.id === this.state.choosenMachine);
-                        choosenMachine.ref.current.style.left = e.screenX - (e.screenX % 100) - 50 + 'px';
-                        //e.screenX - (e.screenX % 50) - 50 + 'px';
-                        choosenMachine.ref.current.style.top = e.screenY - (e.screenY % 100) - 150 + 'px';
-                        //e.screenY - (e.screenY % 50) - 150 + 'px';
                         this.setState({ isDraggable: false });
+                        // Update the choosen machine positions on mouse up
+                        const updatedMachines = this.state.machines.map((thisMachine) => {
+                            if (thisMachine.id === machine.id) {
+                                const { left, top } = this.choosenMachine.current.style;
+                                thisMachine.pos.x = left;
+                                thisMachine.pos.y = top;
+                            } 
+
+                            return thisMachine;
+                        });
+                        this.setState({ machines: updatedMachines });
+                        console.log(updatedMachines);
                     }}
-                    className="machine"
+                    className={`machine id${machine.id}`}
                 >
                     {machine.name}
+
+                    <button
+                        onClick={() => {
+
+                            const machineInfos = this.state.machines;
+                            console.log(machineInfos);
+
+                            this.setState({ updating: true });
+
+                            //this.setState({ 
+                            //    machines: this.state.machines.filter((thisMachine) => thisMachine.id !== machine.id) 
+                            //});
+                            
+                        }}
+                    >
+                        Delete
+                    </button>
                 </div>
             );
         });
@@ -62,12 +96,10 @@ class GridArea extends React.Component {
     }
 
     onCursorMove(e) {
-        if (this.state.choosenMachine && this.state.isDraggable) {
-            const choosenMachine = this.state.machines.find((machine) => machine.id === this.state.choosenMachine);
-            choosenMachine.ref.current.style.left = e.screenX - 50 + 'px';
-            //e.screenX - (e.screenX % 50) - 50 + 'px';
-            choosenMachine.ref.current.style.top = e.screenY - 150 + 'px';
-            //e.screenY - (e.screenY % 50) - 150 + 'px';
+        if (this.choosenMachine && this.state.isDraggable) {
+            this.setState({ updating: true });
+            this.choosenMachine.current.style.left = e.screenX - 50 + 'px'; // TODO Automize the decrease value by getting the width of the machine
+            this.choosenMachine.current.style.top = e.screenY - 150 + 'px';
         }
     }
 
@@ -109,14 +141,13 @@ class GridArea extends React.Component {
 
                     <button
                         onClick={() => {
-                            this.state.machines.forEach((machine, index) => {
-                                console.log(machine, machine.ref.current.style.top);
+                            const machinesInfo = this.state.machines.map((machine, index) => {
 
                                 if (!machine || !machine.ref || !machine.ref.current) {
                                     throw new Error('Machine is null');
                                 }
 
-                                const _machine = {
+                                const info = {
                                     id: machine.id,
                                     name: machine.name,
                                     pos: {
@@ -126,13 +157,17 @@ class GridArea extends React.Component {
                                     createdAt: Date.now()
                                 }
 
-                                console.log(_machine);
-                                
+                                return info;
                             });
+
+                            // TODO Write all the infos to the machines.json
+                            console.log(machinesInfo);
                         }}
                     >
                         Save
                     </button>
+
+                    <LineTo from="id1" to="id2" toAnchor="top left" />
                 </div>
             </>
         );
