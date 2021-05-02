@@ -1,6 +1,7 @@
 
 // MODULES
 import React from 'react';
+import LineTo from 'react-lineto';
 
 // STYLES
 import './GridArea.scss';
@@ -11,13 +12,28 @@ class GridArea extends React.Component {
         this.state = {
             isDraggable: false, // determine wether a machine should follow the cursor pos, trigger on onMouseDown
             machines: [], // include the infos about the machine
-            choosenMachine: 0, // choosen machine id
             updating: false, // just a dummy bool when I want to update the doms
+            connections: [
+                {
+                    fromAnchor: '',
+                    toAnchor: '',
+                    from: {
+                        className: '',
+                        element: null
+                    },
+                    to: {
+                        className: '',
+                        element: null
+                    },
+                    type: 'TCP/IP'
+                }
+            ]
         }
 
         this.machineElements = []; // acutal DOM Elements referring to machines div
 
         this.choosenMachine = null; // chosen machine DOM
+        this.cursor = React.createRef();
 
         // binded functions
         this.onMachineDrag = this.onMachineDrag.bind(this);
@@ -25,6 +41,7 @@ class GridArea extends React.Component {
         this.onMachineDelete = this.onMachineDelete.bind(this);
         this.onSave = this.onSave.bind(this);
         this.createMachine = this.createMachine.bind(this);
+        this.renderConnections = this.renderConnections.bind(this);
         this.onCursorMove = this.onCursorMove.bind(this);
     }
 
@@ -43,8 +60,6 @@ class GridArea extends React.Component {
         const randomX = Math.floor(Math.random() * (width - width / 3) + 100) + 'px';
         const randomY = Math.floor(Math.random() * (height - height / 3) + 100) + 'px';
 
-        console.log(randomX, randomY);
-
         const newMachine = {
             id: (maxValue + 1),
             name,
@@ -61,7 +76,7 @@ class GridArea extends React.Component {
     }
 
     onMachineDrag(e, machine) {
-        this.setState({ isDraggable: true, choosenMachine: machine.id });
+        this.setState({ isDraggable: true });
         this.choosenMachine = machine.ref;
     }
 
@@ -77,6 +92,8 @@ class GridArea extends React.Component {
 
             return thisMachine;
         });
+
+
         this.setState({ machines: updatedMachines });
     }
 
@@ -96,12 +113,50 @@ class GridArea extends React.Component {
                     ref={machine.ref}
                     onMouseDown={(e) => this.onMachineDrag(e, machine)}
                     onMouseUp={(e) => this.onMachineRelease(e, machine)}
-                    className="machine"
-                    id={machine.id.toString()}
-                    style={{ left: machine.pos.x, top: machine.pos.y }}
+                    className={"machine " + machine.id}
+                    style={{ left: machine.pos.x, top: machine.pos.y }} 
+                    // or machine.ref.current.style.left, machine.ref.current.style.top
                 >
-                    {machine.name}
+                    <h2>{machine.name}</h2>
+
+                    <div 
+                        className="connect1"
+                        onClick={() => {
+                            const connections = this.state.connections;
+
+                            const connection = {
+                                fromAnchor: 'right',
+                                toAnchor: '',
+                                // if the connection's to property we click is equal to cursor that means is connection is
+                                // awaiting to be connected
+                                from: {
+                                    className: connections[connections.length - 1].to.className === 'cursor' ?
+                                    connections[connections.length - 1].from.className :
+                                    `machine ${machine.id}`,
+                                    element: machine.ref.current
+                                },
+                                to: {
+                                    className: connections[connections.length - 1].to.className === 'cursor' ?
+                                    `machine ${machine.id}` :
+                                    'cursor',
+                                    element: machine.ref.current
+                                }
+                            }
+
+                            this.setState({ connections: [...this.state.connections, connection] });
+
+                            //this.setState({ connections: this.state.connections.filter((connection) => connection.to.className !== 'cursor') });
+                        }}
+                    />
+                    <div 
+                        className="connect2"
+                        onClick={() => {
+                            
+                        }}
+                    />
+                    
                     <button
+                        className="delete"
                         onClick={(e) => this.onMachineDelete(e, machine)}
                     >
                         Delete
@@ -112,14 +167,27 @@ class GridArea extends React.Component {
 
     }
 
-    onCursorMove(e) {
-        if (this.choosenMachine && this.state.isDraggable) {
-            
-            const choosenMachine = this.choosenMachine.current;
+    renderConnections(connections) {
+        return connections.map((connection, index) => {
+            return (
+                <LineTo
+                    key={index}
+                    from={connection.from.className} to={connection.to.className}
+                />
+            );
+        });
+    }
 
+    onCursorMove(e) {
+        this.setState({ updating: true });
+        if (this.choosenMachine && this.state.isDraggable) {
+            const choosenMachine = this.choosenMachine.current;
             choosenMachine.style.left = e.screenX - 50 + 'px'; // TODO Automize the decrease value by getting the width of the machine
             choosenMachine.style.top = e.screenY - 150 + 'px';
         }
+
+        this.cursor.current.style.left = e.screenX + 'px';
+        this.cursor.current.style.top = (e.screenY - 100) + 'px';
     }
 
     onSave() {
@@ -142,7 +210,7 @@ class GridArea extends React.Component {
             return info;
         });
 
-        console.log(machinesInfo);
+        console.log(this.state.connections);
     }
 
     render() {
@@ -154,36 +222,41 @@ class GridArea extends React.Component {
                 >
                     <ul>
                         <li>
-                            <a 
-                                href="#"
+                            <button
                                 onClick={() => this.createMachine('Linux')}
                             >
                                 Linux
-                            </a>
+                            </button>
                         </li>
                         <li>
-                            <a 
-                                href="#"
+                        <button
                                 onClick={() => this.createMachine('Windows')}
                             >
                                 Windows
-                            </a>
+                            </button>
                         </li>
                         <li>
-                            <a 
-                                href="#"
+                        <button
                                 onClick={() => this.createMachine('MacOS')}
                             >
                                 MacOS
-                            </a>
+                            </button>
                         </li>
                     </ul>
 
                     {this.renderMachines(this.state.machines)}
+                    {this.renderConnections(this.state.connections)}
 
                     <button onClick={this.onSave}>
                         Save
                     </button>
+
+                    <div 
+                        className="cursor"
+                        ref={this.cursor}
+                    >
+
+                    </div>
                 </div>
             </>
         );

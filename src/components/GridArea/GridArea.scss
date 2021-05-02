@@ -6,11 +6,12 @@
     ul {
         position: fixed;
         top: 50%;
-        border: 1px solid black;
     
         li {
     
-            a {
+            button {
+                cursor: pointer;
+                width: 150px;
                 display: block;
                 padding: 10px 20px;
                 border: 1px solid black;
@@ -19,12 +20,54 @@
     }
         
     .machine {
+        display: flex;
+        flex-direction: column;
         border-radius: 5px;
         cursor: pointer;
         position: absolute;
         width: 100px;
         height: 100px;
-        border: 2px solid black;
+        border: 1px solid rgba($color: #888888, $alpha: 1.0);
+
+
+        .connect1 {
+            position: absolute;
+            right: -10px;
+            top: 40%;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #888888;
+        }
+
+        .connect2 {
+            position: absolute;
+            left: -10px;
+            top: 40%;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #888888;
+        }
+
+
+        .delete {
+            border: none;
+            cursor: pointer;
+            padding: .3rem 0rem ;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            transition: all .1s ease-out;
+        }
+
+        .delete:hover {
+            background-color: rgba($color: #acacac, $alpha: 1.0);
+        }
+    }
+
+    .cursor {
+        position: absolute;
     }
 }
 
