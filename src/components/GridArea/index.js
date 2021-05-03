@@ -13,21 +13,7 @@ class GridArea extends React.Component {
             isDraggable: false, // determine wether a machine should follow the cursor pos, trigger on onMouseDown
             machines: [], // include the infos about the machine
             updating: false, // just a dummy bool when I want to update the doms
-            connections: [
-                {
-                    fromAnchor: '',
-                    toAnchor: '',
-                    from: {
-                        className: '',
-                        element: null
-                    },
-                    to: {
-                        className: '',
-                        element: null
-                    },
-                    type: 'TCP/IP'
-                }
-            ]
+            connections: []
         }
 
         this.machineElements = []; // acutal DOM Elements referring to machines div
@@ -113,7 +99,7 @@ class GridArea extends React.Component {
                     ref={machine.ref}
                     onMouseDown={(e) => this.onMachineDrag(e, machine)}
                     onMouseUp={(e) => this.onMachineRelease(e, machine)}
-                    className={"machine " + machine.id}
+                    className={"machine id" + machine.id}
                     style={{ left: machine.pos.x, top: machine.pos.y }} 
                     // or machine.ref.current.style.left, machine.ref.current.style.top
                 >
@@ -122,30 +108,48 @@ class GridArea extends React.Component {
                     <div 
                         className="connect1"
                         onClick={() => {
-                            const connections = this.state.connections;
 
-                            const connection = {
-                                fromAnchor: 'right',
-                                toAnchor: '',
-                                // if the connection's to property we click is equal to cursor that means is connection is
-                                // awaiting to be connected
-                                from: {
-                                    className: connections[connections.length - 1].to.className === 'cursor' ?
-                                    connections[connections.length - 1].from.className :
-                                    `machine ${machine.id}`,
-                                    element: machine.ref.current
-                                },
-                                to: {
-                                    className: connections[connections.length - 1].to.className === 'cursor' ?
-                                    `machine ${machine.id}` :
-                                    'cursor',
-                                    element: machine.ref.current
+                            function createConnection(from, to, fromAnchor, toAnchor) {
+                                return {
+                                    from,
+                                    to,
+                                    fromAnchor,
+                                    toAnchor
                                 }
                             }
 
-                            this.setState({ connections: [...this.state.connections, connection] });
+                            let connection = {};
+                            const connections = this.state.connections;
 
-                            //this.setState({ connections: this.state.connections.filter((connection) => connection.to.className !== 'cursor') });
+                            if (!this.state.connections.length > 0) {
+
+                                connection = createConnection(
+                                    machine.ref.current, // from
+                                    null, // to
+                                    'left center',       // fromAnchor
+                                    ''                   // toAnchor
+                                );
+
+                            } else {
+                                if (!connections[connections.length - 1].to) {
+                                    connection = createConnection(
+                                        connections[connections.length - 1].from,
+                                        machine.ref.current, // TODO DRAG AND DROP USE ON CONNECTIONS
+                                        'left center',
+                                        ''
+                                    );
+                                } else {
+
+                                    connection = createConnection(
+                                        machine.ref.current,
+                                        null,
+                                        'left center',
+                                        ''
+                                    );
+                                }
+                            }
+
+                            this.setState({ connections: [...connections, connection] });
                         }}
                     />
                     <div 
@@ -169,10 +173,11 @@ class GridArea extends React.Component {
 
     renderConnections(connections) {
         return connections.map((connection, index) => {
+            const { from, to } = connection;
             return (
                 <LineTo
                     key={index}
-                    from={connection.from.className} to={connection.to.className}
+                    from={from ? from.className : ''} to={to ? to.className : ''}
                 />
             );
         });
@@ -210,7 +215,7 @@ class GridArea extends React.Component {
             return info;
         });
 
-        console.log(this.state.connections);
+        console.log(machinesInfo, this.state.connections);
     }
 
     render() {
