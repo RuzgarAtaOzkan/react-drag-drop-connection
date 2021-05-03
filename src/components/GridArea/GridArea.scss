@@ -21,6 +21,7 @@
         
     .machine {
         display: flex;
+        z-index: 100;
         flex-direction: column;
         border-radius: 5px;
         cursor: pointer;
@@ -29,9 +30,9 @@
         height: 100px;
         border: 1px solid rgba($color: #888888, $alpha: 1.0);
 
-
         .connect1 {
             position: absolute;
+            z-index: 100;
             right: -10px;
             top: 40%;
             width: 20px;
@@ -68,6 +69,7 @@
 
     .cursor {
         position: absolute;
+        z-index: -10;
     }
 }
 

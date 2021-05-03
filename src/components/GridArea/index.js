@@ -2,6 +2,7 @@
 // MODULES
 import React from 'react';
 import LineTo from 'react-lineto';
+import fs from 'fs';
 
 // STYLES
 import './GridArea.scss';
@@ -54,7 +55,8 @@ class GridArea extends React.Component {
                 x: randomX,
                 y: randomY
             },
-            ref: React.createRef()
+            ref: React.createRef(),
+            createdAt: Date.now()
         };
 
         this.machineElements = [...this.machineElements, newMachine.ref];
@@ -107,7 +109,7 @@ class GridArea extends React.Component {
 
                     <div 
                         className="connect1"
-                        onClick={() => {
+                        onClick={(e) => {
 
                             function createConnection(from, to, fromAnchor, toAnchor) {
                                 return {
@@ -119,39 +121,53 @@ class GridArea extends React.Component {
                             }
 
                             let connection = {};
-                            const connections = this.state.connections;
 
-                            if (!this.state.connections.length > 0) {
+                            if (this.state.connections.length === 0) {
 
                                 connection = createConnection(
-                                    machine.ref.current, // from
-                                    null, // to
+                                    machine.ref.current.className, // from
+                                    this.cursor.current.className, // to
                                     'left center',       // fromAnchor
                                     ''                   // toAnchor
                                 );
 
-                            } else {
-                                if (!connections[connections.length - 1].to) {
-                                    connection = createConnection(
-                                        connections[connections.length - 1].from,
-                                        machine.ref.current, // TODO DRAG AND DROP USE ON CONNECTIONS
-                                        'left center',
-                                        ''
-                                    );
-                                } else {
+                                this.setState({ 
+                                    connections: [...this.state.connections, connection]
+                                });
 
+                            } else {
+
+                                if (this.state.connections[this.state.connections.length - 1].to === 'cursor') {
                                     connection = createConnection(
-                                        machine.ref.current,
-                                        null,
+                                        this.state.connections[this.state.connections.length - 1].from,
+                                        machine.ref.current.className,
                                         'left center',
                                         ''
                                     );
+
+                                    const currentConnections = [...this.state.connections];
+                                    currentConnections.pop();
+                                    currentConnections.push(connection);
+
+                                    this.setState({ connections: [...currentConnections] });
+
+                                } else {
+                                    connection = createConnection(
+                                        machine.ref.current.className,
+                                        this.cursor.current.className,
+                                        'left center',
+                                        ''
+                                    );
+
+                                    this.setState({ 
+                                        connections: [...this.state.connections, connection]
+                                    });
                                 }
                             }
 
-                            this.setState({ connections: [...connections, connection] });
                         }}
                     />
+
                     <div 
                         className="connect2"
                         onClick={() => {
@@ -177,7 +193,7 @@ class GridArea extends React.Component {
             return (
                 <LineTo
                     key={index}
-                    from={from ? from.className : ''} to={to ? to.className : ''}
+                    from={from ? from : ''} to={to ? to : ''}
                 />
             );
         });
@@ -195,27 +211,23 @@ class GridArea extends React.Component {
         this.cursor.current.style.top = (e.screenY - 100) + 'px';
     }
 
-    onSave() {
-        const machinesInfo = this.state.machines.map((machine, index) => {
+    async onSave() {
+        const machines = [...this.state.machines];
+        const connections = [...this.state.connections];
 
-            if (!machine || !machine.ref || !machine.ref.current) {
-                throw new Error('Machine is null');
+        console.log(machines, connections);
+
+        machines.map((machine) => {
+            return {
+                
             }
-
-            const info = {
-                id: machine.id,
-                name: machine.name,
-                pos: {
-                    x: machine.ref.current.style.left,
-                    y: machine.ref.current.style.top
-                },
-                createdAt: Date.now()
-            }
-
-            return info;
         });
 
-        console.log(machinesInfo, this.state.connections);
+        machines.forEach((machine) => {
+            machine.connections = connections.filter((connection) => connection.from === machine.ref.current);
+        });
+
+        //const data = JSON.stringify(machines);
     }
 
     render() {
