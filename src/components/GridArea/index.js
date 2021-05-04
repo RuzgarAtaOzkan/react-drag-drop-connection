@@ -217,17 +217,23 @@ class GridArea extends React.Component {
 
         console.log(machines, connections);
 
-        machines.map((machine) => {
+        const configedMachines = machines.map((machine) => {
+
+            const machinesConnections = connections.filter((connection) => {
+                if (connection.from.includes(machine.id)) {
+                    return connection;
+                }
+            });
+
             return {
-                
+                ...machine,
+                ref: null,
+                connections: machinesConnections
             }
         });
 
-        machines.forEach((machine) => {
-            machine.connections = connections.filter((connection) => connection.from === machine.ref.current);
-        });
-
-        //const data = JSON.stringify(machines);
+        const data = JSON.stringify(configedMachines);
+        console.log(data);
     }
 
     render() {
