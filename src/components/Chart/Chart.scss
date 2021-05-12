@@ -1,0 +1,25 @@
+.chart-area {
+  background-color: black;
+  width: 500px;
+  height: 500px;
+  margin: 100px auto;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  border: 12px solid;
+  border-color: red red blue blue;
+  align-items: center;
+  transform: rotate(45deg);
+  transition: all 0.2s ease-out;
+
+  .battle-arrow {
+    border-radius: 50%;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+
+    img {
+      width: 35px;
+    }
+  }
+}

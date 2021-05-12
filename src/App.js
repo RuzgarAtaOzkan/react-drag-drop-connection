@@ -1,8 +1,7 @@
-
 import React from 'react';
 
 // COMPONENTS
-import GridArea from './components/GridArea';
+import Chart from './components/Chart';
 
 // STYLES
 import './styles/App.scss';
@@ -20,11 +19,10 @@ class App extends React.Component {
   render() {
     return (
       <>
-        <GridArea />
+        <Chart />
       </>
     );
   }
 }
 
 export default App;
-

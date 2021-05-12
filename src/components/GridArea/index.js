@@ -14,10 +14,9 @@ class GridArea extends React.Component {
             isDraggable: false, // determine wether a machine should follow the cursor pos, trigger on onMouseDown
             machines: [], // include the infos about the machine
             updating: false, // just a dummy bool when I want to update the doms
-            connections: []
+            connections: [],
+            machinesSize: 100
         }
-
-        this.machineElements = []; // acutal DOM Elements referring to machines div
 
         this.choosenMachine = null; // chosen machine DOM
         this.cursor = React.createRef();
@@ -30,6 +29,7 @@ class GridArea extends React.Component {
         this.createMachine = this.createMachine.bind(this);
         this.renderConnections = this.renderConnections.bind(this);
         this.onCursorMove = this.onCursorMove.bind(this);
+        this.onMouseWheel = this.onMouseWheel.bind(this);
     }
 
     createMachine(name) {
@@ -59,7 +59,10 @@ class GridArea extends React.Component {
             createdAt: Date.now()
         };
 
-        this.machineElements = [...this.machineElements, newMachine.ref];
+        if (newMachine.ref.current) {
+            this.setState({ machinesSize: newMachine.ref.current.style.width });
+        }
+
         this.setState({ machines: [...this.state.machines, newMachine] });
     }
 
@@ -203,8 +206,8 @@ class GridArea extends React.Component {
         this.setState({ updating: true });
         if (this.choosenMachine && this.state.isDraggable) {
             const choosenMachine = this.choosenMachine.current;
-            choosenMachine.style.left = e.screenX - 50 + 'px'; // TODO Automize the decrease value by getting the width of the machine
-            choosenMachine.style.top = e.screenY - 150 + 'px';
+            choosenMachine.style.left = e.screenX + 'px'; // TODO Automize the decrease value by getting the width of the machine
+            choosenMachine.style.top = e.screenY + 'px';
         }
 
         this.cursor.current.style.left = e.screenX + 'px';
@@ -214,8 +217,6 @@ class GridArea extends React.Component {
     async onSave() {
         const machines = [...this.state.machines];
         const connections = [...this.state.connections];
-
-        console.log(machines, connections);
 
         const configedMachines = machines.map((machine) => {
 
@@ -234,6 +235,41 @@ class GridArea extends React.Component {
 
         const data = JSON.stringify(configedMachines);
         console.log(data);
+    }
+
+    onMouseWheel(e) {
+        if (e.wheelDelta > 0) {
+            this.state.machines.forEach((machine) => {
+
+                this.state.machinesSize += 10;
+
+                if (this.state.machinesSize < 100) {
+                    this.state.machinesSize = 100;
+                }
+                machine.ref.current.style.width = (this.state.machinesSize + 'px');
+                machine.ref.current.style.height = (this.state.machinesSize + 'px');
+                machine.ref.current.style.margin = ((this.state.machinesSize ) + 'px')
+
+            });
+        } else {
+            this.state.machines.forEach((machine) => {
+                this.state.machinesSize -= 10;
+                if (this.state.machinesSize < 100) {
+                    this.state.machinesSize = 100;
+                }
+                machine.ref.current.style.width = (this.state.machinesSize + 'px');
+                machine.ref.current.style.height = (this.state.machinesSize + 'px');
+                machine.ref.current.style.margin = ((this.state.machinesSize ) + 'px')
+            });
+        }
+    }
+
+    componentDidMount() {
+        // window.addEventListener('wheel', this.onMouseWheel);
+    }
+
+    componentWillUnmount() {
+        // window.removeEventListener('wheel', this.onMouseWheel);
     }
 
     render() {
